@@ -1003,7 +1003,7 @@ class BrotherPrint:
         n2 = size%10
         self.send('^SS'+chr(n1)+chr(n2))
 
-    def select_obj(self, name):
+    def select_obj_by_name(self, name):
         '''Select an object
 
         Args:
@@ -1014,6 +1014,18 @@ class BrotherPrint:
             None
         '''
         self.send('^ON'+name+chr(0))
+
+    def select_obj_by_id(self, id):
+        '''Select an object
+
+        Args:
+            name: the name of the object you want to select
+        Returns:
+            None
+        Raises:
+            None
+        '''
+        self.send('^OS'+id)
 
     def insert_into_obj(self, data):
         '''Insert text into selected object.
@@ -1033,7 +1045,7 @@ class BrotherPrint:
 
         self.send('^DI'+chr(n1)+chr(n2)+data)
 
-    def select_and_insert(self, name, data):
+    def select_name_and_insert(self, id, data):
         '''Combines selection and data insertion into one function
 
         Args:
@@ -1044,5 +1056,52 @@ class BrotherPrint:
         Raises:
             None
         '''
-        self.select_obj(name)
+
+        self.select_obj_by_name(id)
+        self.insert_into_obj(line)
+
+    def select_id_and_insert(self, id, data):
+        '''Combines selection and data insertion into one function
+
+        Args:
+            id: the starting id of the object you want to insert into
+            data: the data you want to insert
+        Returns:
+            None
+        Raises:
+            None
+        '''
+
+        self.select_obj_by_id(id)
         self.insert_into_obj(data)
+
+    def multi_label_id_insert(self, id, data):
+        lines = data.split('\n')
+        for line in lines:
+            sub_lines = []
+            current_line = line
+            while len(current_line) >= 40:
+                space = current_line[:40].rfind(' ')
+                sub_lines.append(current_line[:space])
+                current_line = current_line[space+1:]
+            sub_lines.append(current_line)
+            for sub_line in sub_lines:
+                self.select_id_and_insert(id, sub_line)
+                id = self.increment_id(id)
+
+    def increment_id(self, id):
+        tens_digit = id[0]
+        ones_digit = id[1]
+        ones_int = int(ones_digit)
+        ones_int += 1
+        if ones_int > 9:
+            ones_digit = '0'
+            tens_int = int(tens_digit)
+            tens_int += 1
+            if tens_digit > 9:
+                # overflow, wrap to 1
+                tens_digit = '0'
+                ones_digit = '1'
+            return '%s%s' % (tens_digit, ones_digit)
+        else:
+            return '%s%d' % (tens_digit, ones_int)
