@@ -1,4 +1,5 @@
 import re
+import six
 '''Brother Python EscP Command Library
 
 Description:
@@ -1039,7 +1040,7 @@ class BrotherPrint:
         '''
         if not data:
             data = ''
-        if isinstance(data, unicode):
+        if isinstance(data, six.text_type):
             data = data.encode('raw_unicode_escape')
         size = len(data)
         n1 = size%256
