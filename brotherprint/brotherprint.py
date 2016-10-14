@@ -1039,6 +1039,8 @@ class BrotherPrint:
         '''
         if not data:
             data = ''
+        if isinstance(data, unicode):
+            data = data.encode('raw_unicode_escape')
         size = len(data)
         n1 = size%256
         n2 = size/256
