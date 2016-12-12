@@ -226,9 +226,9 @@ class BrotherPrint:
             RuntimeError: Top margin must be less than the bottom margin.
         '''
         tL = topmargin%256
-        tH = topmargin/256
+        tH = topmargin//256
         BL = bottommargin%256
-        BH = topmargin/256
+        BH = topmargin//256
         if (tL+tH*256) < (BL + BH*256):
             self.send(chr(27)+'('+'c'+chr(4)+chr(0)+chr(tL)+chr(tH)+chr(BL)+chr(BH))
         else:
@@ -325,7 +325,10 @@ class BrotherPrint:
             None
         Raises:
             None'''
-        self.fsocket.send(text)
+        if not isinstance(text, six.binary_type):
+            self.fsocket.send(text.encode())
+        else:
+            self.fsocket.send(text)
 
     def forward_feed(self, amount):
         '''Calling this function finishes input of the current line, then moves the vertical
@@ -355,7 +358,7 @@ class BrotherPrint:
             RuntimeError: Invalid vertical position.
         '''
         mL = amount%256
-        mH = amount/256
+        mH = amount//256
         if amount < 32767 and amount > 0:
             self.send(chr(27)+'('+'V'+chr(2)+chr(0)+chr(mL)+chr(mH))
         else:
@@ -374,7 +377,7 @@ class BrotherPrint:
             None
         '''
         n1 = amount%256
-        n2 = amount/256
+        n2 = amount//256
         self.send(chr(27)+'${n1}{n2}'.format(n1=chr(n1), n2=chr(n2)))
 
     def rel_horz_pos(self, amount):
@@ -392,7 +395,7 @@ class BrotherPrint:
             None
         '''
         n1 = amount%256
-        n2 = amount/256
+        n2 = amount//256
         self.send(chr(27)+'\{n1}{n2}'.format(n1=chr(n1),n2=chr(n2)))
 
     def alignment(self, align):
@@ -862,7 +865,7 @@ class BrotherPrint:
                             'on': '1'}
 
         sendstr = ''
-        n2 = height/256
+        n2 = height//256
         n1 = height%256
         if format in barcodes and width in widths and ratio in ratios and characters in character_choices and rss_symbol in rss_symbols:
             sendstr += (chr(27)+'i'+'t'+barcodes[format]+'s'+'p'+'r'+character_choices[characters]+'u'+'x'+'y'+'h' + chr(n1) + chr(n2) +
@@ -900,7 +903,7 @@ class BrotherPrint:
         Raises:
             None
         '''
-        n1 = int(template)/10
+        n1 = int(template)//10
         n2 = int(template)%10
         self.send('^TS'+'0'+str(n1)+str(n2))
 
@@ -968,7 +971,7 @@ class BrotherPrint:
         size = len(command)
         if size > 20:
             raise RuntimeError('Command too long')
-        n1 = size/10
+        n1 = size//10
         n2 = size%10
         self.send('^PS'+chr(n1)+chr(n2)+command)
 
@@ -982,8 +985,8 @@ class BrotherPrint:
         Raises:
             None
         '''
-        n1 = count/100
-        n2 = (count-(n1*100))/10
+        n1 = count//100
+        n2 = (count-(n1*100))//10
         n3 = (count-((n1*100)+(n2*10)))
         self.send('^PC'+chr(n1)+chr(n2)+chr(n3))
 
@@ -1000,7 +1003,7 @@ class BrotherPrint:
         size = len(delim)
         if size > 20:
             raise RuntimeError('Delimeter too long')
-        n1 = size/10
+        n1 = size//10
         n2 = size%10
         self.send('^SS'+chr(n1)+chr(n2))
 
@@ -1044,9 +1047,11 @@ class BrotherPrint:
             data = data.encode('raw_unicode_escape')
         size = len(data)
         n1 = size%256
-        n2 = size/256
+        n2 = size//256
 
-        self.send('^DI'+chr(n1)+chr(n2)+data)
+        instruction = '^DI' + chr(n1) + chr(n2)
+
+        self.send(b''.join([instruction.encode('raw_unicode_escape'), data]))
 
     def select_name_and_insert(self, id, data):
         '''Combines selection and data insertion into one function
